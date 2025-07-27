@@ -12,7 +12,7 @@ public class move : MonoBehaviour
     Animator anim;
     CapsuleCollider2D colliderr;
 
-    //ªÁøÓµÂ
+    //ÏÇ¨Ïö¥Îìú
     public AudioClip audioJump;
     public AudioClip audioAttack;
     public AudioClip audioDamaged;
@@ -22,6 +22,7 @@ public class move : MonoBehaviour
     public AudioClip audioUi;
 
     AudioSource audioSource;
+
 
     void Awake()
     {
@@ -33,25 +34,25 @@ public class move : MonoBehaviour
     }
     void Update()
     {
-        //¡°«¡
+        //Ï†êÌîÑ
         if (Input.GetButtonDown("Jump") && !anim.GetBool("isJumping"))
         {
-            rigid.AddForce(Vector2.up * JumpPower, ForceMode2D.Impulse);
+            rigid.linearVelocity = new Vector2(rigid.linearVelocity.x, JumpPower);
             anim.SetBool("isJumping", true);
             PlaySound("JUMP");
         }
-        //¡§¡ˆ
+        //Ï†ïÏßÄ
         if (Input.GetButtonUp("Horizontal"))
         {
             rigid.linearVelocity = new Vector2(rigid.linearVelocity.normalized.x * 0.5f, rigid.linearVelocity.y);
         }
-        //πÊ«‚¿¸»Ø
+        //Î∞©Ìñ•Ï†ÑÌôò
         float h = Input.GetAxisRaw("Horizontal");
         if (h != 0)
         {
             spriteRenderer.flipX = h < 0;
         }
-        //∞»±‚ æ÷¥œ∏ﬁ¿Ãº«
+        //Í±∑Í∏∞ Ïï†ÎãàÎ©îÏù¥ÏÖò
         if (Mathf.Abs(rigid.linearVelocity.x) < 0.4)
             anim.SetBool("isWalking", false);
         else
@@ -61,18 +62,18 @@ public class move : MonoBehaviour
     }
     void FixedUpdate()
     {
-        //∞»±‚
+        //Í±∑Í∏∞
         float h = Input.GetAxisRaw("Horizontal");
         rigid.AddForce(Vector2.right * h, ForceMode2D.Impulse);
 
-        //√÷¥Î º”µµ
+        //ÏµúÎåÄ ÏÜçÎèÑ
         if (rigid.linearVelocity.x > maxSpeed)
             rigid.linearVelocity = new Vector2(maxSpeed, rigid.linearVelocity.y);
         else if (rigid.linearVelocity.x < maxSpeed * (-1))
             rigid.linearVelocity = new Vector2(maxSpeed * (-1), rigid.linearVelocity.y);
 
-        //¡°«¡ æ÷¥œ∏ﬁ¿Ãº« ¡ﬂ¥‹(RayªÁøÎ)
-        if(rigid.linearVelocity.y < 0)
+        //Ï†êÌîÑ Ïï†ÎãàÎ©îÏù¥ÏÖò Ï§ëÎã®(RayÏÇ¨Ïö©)
+        if (rigid.linearVelocity.y < 0)
         {
             Debug.DrawRay(rigid.position, Vector3.down, new Color(0, 1, 0));
             RaycastHit2D rayhit = Physics2D.Raycast(rigid.position, Vector3.down, 1, LayerMask.GetMask("Platform"));
@@ -84,24 +85,27 @@ public class move : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D collision)
     {
-        //¿˚ ¥Í¿Ω -> µ•πÃ¡ˆ
+        //Ï†Å ÎãøÏùå -> Îç∞ÎØ∏ÏßÄ
+        Debug.Log($"OnCollisionEnter2D: velocity.y = {rigid.linearVelocity.y}");
         if (collision.gameObject.tag == "enemy")
         {
-            if (rigid.linearVelocity.y < 0 && transform.position.y > collision.transform.position.y)
+            //Debug.Log($"OnCollisionEnter2D: velocity.y = {rigid.linearVelocity.y}");
+            if (rigid.linearVelocity.y != 0 && rigid.linearVelocity.y < 2 && transform.position.y > collision.transform.position.y )
                 OnAttack(collision.transform);
             else
                 OnDamaged(collision.transform.position);
         }
-        //∞°Ω√ -> µ•πÃ¡ˆ
+        //Í∞ÄÏãú -> Îç∞ÎØ∏ÏßÄ
         if (collision.gameObject.tag == "sprike")
         {
-                OnDamaged(collision.transform.position);
+            OnDamaged(collision.transform.position);
         }
+
     }
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        //µø¿¸
+        //ÎèôÏ†Ñ
         if (collision.gameObject.tag == "Item")
         {
             PlaySound("ITEM");
@@ -111,9 +115,9 @@ public class move : MonoBehaviour
 
             if (isBronze)
                 gameManager.stage_point += 50;
-            else if(isSilver)
+            else if (isSilver)
                 gameManager.stage_point += 100;
-            else if(isGold)
+            else if (isGold)
                 gameManager.stage_point += 300;
 
             collision.gameObject.SetActive(false);
@@ -121,7 +125,7 @@ public class move : MonoBehaviour
         else if (collision.gameObject.tag == "Finish")
         {
             PlaySound("FINISH");
-            //¥Ÿ¿ΩΩ∫≈◊¿Ã¡ˆ
+            //Îã§ÏùåÏä§ÌÖåÏù¥ÏßÄ
             gameManager.NextStage();
         }
     }
@@ -137,16 +141,16 @@ public class move : MonoBehaviour
     void OnDamaged(Vector2 targetPos)
     {
         PlaySound("DAMAGED");
-        //µ•πÃ¡ˆ
+        //Îç∞ÎØ∏ÏßÄ
         gameManager.HealthDown();
 
-        //≈ı∏Ì»≠ + π´¿˚
+        //Ìà¨Î™ÖÌôî + Î¨¥Ï†Å
         gameObject.layer = 9;
         spriteRenderer.color = new Color(1, 1, 1, 0.4f);
 
-        //∆®∞‹≥™∞°±‚
-        int dirc = transform.position.x - targetPos.x >0 ? 1 : -1;
-        rigid.AddForce(new Vector2(dirc, 1)*7, ForceMode2D.Impulse);
+        //ÌäïÍ≤®ÎÇòÍ∞ÄÍ∏∞
+        int dirc = transform.position.x - targetPos.x > 0 ? 1 : -1;
+        rigid.AddForce(new Vector2(dirc, 1) * 7, ForceMode2D.Impulse);
 
         anim.SetTrigger("isDamaged");
         Invoke("offDamage", 1);
@@ -155,7 +159,7 @@ public class move : MonoBehaviour
     void offDamage()
     {
         gameObject.layer = 8;
-        spriteRenderer.color = new Color(1, 1, 1,1);
+        spriteRenderer.color = new Color(1, 1, 1, 1);
     }
     public void Ondie()
     {
